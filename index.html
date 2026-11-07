@@ -196,156 +196,16 @@
       </header>
       <main id="app"></main>
     </div>
+    <script src="wichtel-logic.js?v=2"></script>
     <script>
       var app = document.getElementById("app");
 
-      // ==LOGIC-START==
-      // ---------- Zufall (kryptografisch, falls verfügbar) ----------
-      function rnd(n) {
-        if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-          var a = new Uint32Array(1);
-          crypto.getRandomValues(a);
-          return a[0] % n;
-        }
-        return Math.floor(Math.random() * n);
-      }
-
-      // ---------- Zieh-Logik ----------
-      function shuffle(a) {
-        a = a.slice();
-        for (var i = a.length - 1; i > 0; i--) {
-          var j = rnd(i + 1);
-          var t = a[i];
-          a[i] = a[j];
-          a[j] = t;
-        }
-        return a;
-      }
-
-      // Verteilt die getaggten Lose: JEDER Ziehende erhält genau ein getaggtes Los
-      // (perfektes Matching im x-regulären bipartiten Graphen, Kuhn-Verfahren)
-      function decorate(base, n) {
-        var matchName = [];
-        for (var m = 0; m < n; m++) matchName.push(-1);
-        function tryK(i, visited) {
-          var opts = shuffle(base[i]);
-          for (var o = 0; o < opts.length; o++) {
-            var j = opts[o];
-            if (visited[j]) continue;
-            visited[j] = true;
-            if (matchName[j] === -1 || tryK(matchName[j], visited)) {
-              matchName[j] = i;
-              return true;
-            }
-          }
-          return false;
-        }
-        var ok = true;
-        var order = [];
-        for (var oi = 0; oi < base.length; oi++) order.push(oi);
-        order = shuffle(order);
-        for (var oi2 = 0; oi2 < order.length; oi2++) {
-          var visited = [];
-          for (var v = 0; v < n; v++) visited.push(false);
-          if (!tryK(order[oi2], visited)) { ok = false; break; }
-        }
-        var result = base.map(function (row, d) {
-          return row.map(function (j) {
-            return { j: j, tagged: ok ? matchName[j] === d : false };
-          });
-        });
-        if (!ok) {
-          // Fallback (theoretisch unerreichbar): Zufallsvergabe pro Name
-          var byName = [];
-          for (var b = 0; b < n; b++) byName.push([]);
-          for (var d2 = 0; d2 < base.length; d2++) {
-            for (var c = 0; c < base[d2].length; c++) byName[base[d2][c]].push({ drawer: d2, col: c });
-          }
-          for (var j2 = 0; j2 < n; j2++) {
-            var entries = byName[j2];
-            if (!entries.length) continue;
-            var w = entries[rnd(entries.length)];
-            result[w.drawer][w.col].tagged = true;
-          }
-        }
-        return result.map(function (row) { return shuffle(row); });
-      }
-
-      function computeAssignment(n, x) {
-        if (n < 2 || x < 1 || x > n - 1) return null;
-        var idx = [];
-        for (var i = 0; i < n; i++) idx.push(i);
-        for (var attempt = 0; attempt < 1000; attempt++) {
-          var copies = [];
-          var picks = [];
-          for (var c = 0; c < n; c++) { copies.push(x); picks.push([]); }
-          var order = shuffle(idx);
-          var ok = true;
-          for (var oi = 0; oi < order.length; oi++) {
-            var i2 = order[oi];
-            var candidates = idx.filter(function (j) { return j !== i2 && copies[j] > 0; });
-            if (candidates.length < x) { ok = false; break; }
-            for (var k = 0; k < x; k++) {
-              var maxC = Math.max.apply(null, candidates.map(function (j) { return copies[j]; }));
-              var best = candidates.filter(function (j) { return copies[j] === maxC; });
-              var pick = best[rnd(best.length)];
-              picks[i2].push(pick);
-              copies[pick] -= 1;
-              candidates = candidates.filter(function (j) { return j !== pick; });
-            }
-          }
-          if (ok) return decorate(picks, n);
-        }
-        var perm = shuffle(idx);
-        var pos = [];
-        for (var p2 = 0; p2 < n; p2++) pos[perm[p2]] = p2;
-        var circ = idx.map(function (i3) {
-          var res = [];
-          for (var k2 = 1; k2 <= x; k2++) res.push(perm[(pos[i3] + k2) % n]);
-          return res;
-        });
-        return decorate(circ, n);
-      }
-
-      // ---------- Link-Kodierung (UTF-8 → Base64url) ----------
-      // Die Daten stehen im #-Teil der URL. Dieser Teil wird nie an einen Server
-      // übertragen – es gibt keine Datenbank, nichts wird online gespeichert.
-      function b64e(str) {
-        var bytes = new TextEncoder().encode(str);
-        var bin = "";
-        for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-        return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-      }
-      function b64d(s) {
-        s = s.replace(/-/g, "+").replace(/_/g, "/");
-        while (s.length % 4) s += "=";
-        var bin = atob(s);
-        var bytes = new Uint8Array(bin.length);
-        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        return new TextDecoder().decode(bytes);
-      }
-
-      // Erzeugt die Daten für den persönlichen Link von Ziehendem i
-      function payloadFor(draw, i) {
-        return {
-          v: 1,
-          t: draw.title,
-          d: draw.ts,
-          n: draw.participants[i].name,
-          p: draw.assignment[i].map(function (pick) {
-            var p = draw.participants[pick.j];
-            return [p.name, pick.tagged ? String(p.tag || "").trim() : ""];
-          })
-        };
-      }
-
-      function decodePayload(code) {
-        var d = JSON.parse(b64d(code));
-        if (!d || typeof d.n !== "string" || !Array.isArray(d.p)) throw new Error("ungültig");
-        d.p = d.p.map(function (e) { return [String(e[0]), String(e[1] || "")]; });
-        return d;
-      }
-      // ==LOGIC-END==
+      // Zieh-Logik & Link-Kodierung: siehe wichtel-logic.js
+      var L = window.WichtelLogic;
+      var shuffle = L.shuffle;
+      var computeAssignment = L.computeAssignment;
+      var payloadFor = L.payloadFor;
+      var decodePayload = L.decodePayload;
 
       function esc(s) {
         return String(s).replace(/[&<>"']/g, function (c) {
@@ -362,7 +222,7 @@
       }
 
       function baseUrl() { return location.href.split("#")[0]; }
-      function linkFor(draw, i) { return baseUrl() + "#w=" + b64e(JSON.stringify(payloadFor(draw, i))); }
+      function linkFor(draw, i) { return baseUrl() + "#w=" + L.encodePayload(payloadFor(draw, i)); }
       function messageFor(draw, i) {
         return "🎄 Hallo " + draw.participants[i].name + "!\n\n" +
           "Hier ist dein geheimer Wichtel-Link für „" + draw.title + "“:\n" +
@@ -403,6 +263,7 @@
         phase: "ready",
         showSummary: false,
         flash: -1,
+        confirmFrom: "setup",
         hint: "",
         guest: null,
         gphase: "ready"
@@ -445,7 +306,7 @@
         render();
       }
 
-      function startRound() {
+      function startRound(confirmed) {
         var n = state.participants.length;
         clampX();
         if (state.x >= 2) {
@@ -458,13 +319,15 @@
             return;
           }
         }
-        if (state.draw) {
-          var ok = confirm(
-            "Es gibt bereits eine Ziehung.\n\n" +
-            "Bereits verschickte Links zeigen weiterhin die ALTE Ziehung. " +
-            "Nach dem Neu-Auslosen musst du allen die neuen Links schicken.\n\nWirklich neu auslosen?"
-          );
-          if (!ok) return;
+        if (n < 2) { state.hint = "Mindestens 2 Teilnehmer nötig."; state.screen = "setup"; render(); return; }
+        // Bestätigung in der App statt Browser-Popup (confirm() wird von manchen
+        // Browsern/In-App-Browsern blockiert – dann passierte vorher einfach nichts)
+        if (state.draw && !confirmed) {
+          state.confirmFrom = state.screen;
+          state.screen = "confirm";
+          render();
+          window.scrollTo(0, 0);
+          return;
         }
         var picks = computeAssignment(n, state.x);
         if (!picks) { state.hint = "Mit dieser Kombination ist keine faire Ziehung möglich."; render(); return; }
@@ -672,6 +535,20 @@
           "Es wird nichts auf einem Server gespeichert.</p>";
       }
 
+      // ---------- Rendering: Neu auslosen bestätigen ----------
+      function renderConfirm() {
+        var d = state.draw;
+        var sentCount = d.sent.filter(Boolean).length;
+        return '<div class="card center" data-screen="confirm"><div style="font-size:2.4rem">⚠️</div>' +
+          '<div class="h2" style="margin-top:.3rem">Neu auslosen?</div>' +
+          '<p class="dim" style="margin-top:.6rem">Es gibt bereits eine Ziehung vom ' + esc(fmtDate(d.ts)) +
+          " (" + sentCount + " von " + d.participants.length + " Links verschickt).</p>" +
+          '<p class="dim" style="margin-top:.5rem">Bereits verschickte Links zeigen weiterhin die <b>alte</b> Ziehung. ' +
+          "Nach dem Neu-Auslosen musst du allen die neuen Links schicken.</p>" +
+          '<button class="btn btn-primary mt" data-act="redraw" style="margin-top:1.3rem">🔁 Ja, neu auslosen</button>' +
+          '<button class="btn btn-ghost mt" data-act="confirmcancel">Abbrechen</button></div>';
+      }
+
       // ---------- Rendering: Handy herumgeben ----------
       function renderReveal() {
         var d = state.draw;
@@ -750,7 +627,8 @@
           return;
         }
         sub.textContent = "Weihnachtswichtel mit Mehrfachziehung";
-        if (state.screen === "links" && state.draw) app.innerHTML = renderLinks();
+        if (state.screen === "confirm" && state.draw) app.innerHTML = renderConfirm();
+        else if (state.screen === "links" && state.draw) app.innerHTML = renderLinks();
         else if (state.screen === "reveal" && state.draw) app.innerHTML = renderReveal();
         else app.innerHTML = renderSetup();
       }
@@ -781,7 +659,9 @@
         } else if (act === "remove") removeName(idx);
         else if (act === "dec") { state.x = Math.max(1, state.x - 1); persist(); render(); }
         else if (act === "inc") { state.x = Math.min(maxX(), state.x + 1); persist(); render(); }
-        else if (act === "start") startRound();
+        else if (act === "start") startRound(false);
+        else if (act === "redraw") startRound(true);
+        else if (act === "confirmcancel") { state.screen = state.confirmFrom === "links" ? "links" : "setup"; render(); }
         else if (act === "draw") doDraw();
         else if (act === "next") next();
         else if (act === "local") startLocalReveal();

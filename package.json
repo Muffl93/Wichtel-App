@@ -1,0 +1,13 @@
+{
+  "name": "wichtel-app",
+  "private": true,
+  "description": "Wichtel-Zauber – Weihnachtswichtel mit Mehrfachziehung",
+  "scripts": {
+    "test": "node --test",
+    "test:logic": "node --test tests/logic.test.js",
+    "test:ui": "node --test tests/ui.test.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}

@@ -40,7 +40,24 @@ Läuft kostenlos über **GitHub Pages**, ohne Server, ohne Datenbank und ohne An
 > Hinweis: GitHub Pages ist für **öffentliche** Repositories kostenlos. Das ist unbedenklich – im
 > Repository liegt nur der App-Code, keine Namen und keine Ziehungen.
 
-## Lokal testen
+## Tests
+
+Die Zieh-Logik steckt in `wichtel-logic.js` und wird automatisch geprüft:
+
+- `tests/logic.test.js` – alle Ziehregeln mit tausenden Zufallsziehungen, Zufälligkeit, Link-Kodierung
+- `tests/ui.test.js` – klickt die echten Abläufe im Browser durch (auslosen, ändern & neu auslosen,
+  Links öffnen, Handy herumgeben, Neuladen …)
+
+Bei jedem Hochladen laufen die Tests automatisch auf GitHub (Reiter **Actions**).
+Lokal (Node.js nötig):
+
+```
+npm install
+npx playwright install chromium
+npm test
+```
+
+## Lokal öffnen
 
 `index.html` einfach im Browser öffnen. Zum Verschicken der Links aber die GitHub-Pages-Adresse
 benutzen – Links aus einer lokal geöffneten Datei funktionieren nur auf dem eigenen PC

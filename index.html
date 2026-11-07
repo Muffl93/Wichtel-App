@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a1f14" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Wichtel-Zauber</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>" />
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { background: #22101a; }
+      body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        min-height: 100vh;
+        background: linear-gradient(180deg, #0a1f14, #0d2818 45%, #22101a);
+        color: #ecfdf5;
+      }
+      .snowlayer { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+      .flake { position: absolute; top: -6vh; animation: snowfall linear infinite; pointer-events: none; }
+      @keyframes snowfall {
+        0% { transform: translateY(0) translateX(0); opacity: 0; }
+        10% { opacity: 0.85; }
+        100% { transform: translateY(112vh) translateX(30px); opacity: 0.85; }
+      }
+      @keyframes shakex {
+        0%, 100% { transform: rotate(0deg) scale(1); }
+        20% { transform: rotate(-10deg) scale(1.06); }
+        40% { transform: rotate(10deg) scale(1.06); }
+        60% { transform: rotate(-7deg) scale(1.03); }
+        80% { transform: rotate(7deg) scale(1.03); }
+      }
+      .shake { animation: shakex 0.55s ease-in-out infinite; display: inline-block; }
+      .page { max-width: 28rem; margin: 0 auto; padding: 0 1.25rem 3rem; position: relative; z-index: 1; }
+      header { text-align: center; padding: 2.2rem 0 1.4rem; }
+      header .tree { font-size: 2.8rem; }
+      h1 { font-size: 1.9rem; color: #fde68a; margin-top: 0.4rem; letter-spacing: -0.02em; }
+      .sub { color: rgba(236, 253, 245, 0.7); font-size: 0.85rem; margin-top: 0.25rem; }
+      .card {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 1.25rem;
+        padding: 1.1rem;
+        backdrop-filter: blur(6px);
+      }
+      .field {
+        width: 100%; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 0.9rem; padding: 0.75rem 1rem; color: #ecfdf5; outline: none; font-size: 1rem;
+      }
+      .field::placeholder { color: rgba(236, 253, 245, 0.4); }
+      .field:focus { border-color: rgba(252, 211, 77, 0.6); }
+      .lbltop { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.5rem; display: block; }
+      .addrow { display: flex; gap: 0.5rem; }
+      .addrow input {
+        flex: 1; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 0.9rem; padding: 0.85rem 1rem; color: #ecfdf5; outline: none; font-size: 1rem;
+      }
+      .addrow input::placeholder { color: rgba(236, 253, 245, 0.4); }
+      .addrow input:focus { border-color: rgba(252, 211, 77, 0.6); }
+      .addrow button {
+        width: 3.4rem; border-radius: 0.9rem; background: rgba(5, 150, 105, 0.85); color: #fff;
+        font-size: 1.4rem; font-weight: 700; border: none; cursor: pointer;
+      }
+      .addrow button:hover { background: rgba(16, 185, 129, 0.9); }
+      .hint { color: rgba(252, 211, 77, 0.9); font-size: 0.8rem; margin-top: 0.5rem; }
+      .hint.center, .stat { text-align: center; }
+      .stat { color: rgba(236, 253, 245, 0.55); font-size: 0.8rem; margin-top: 0.7rem; }
+      .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; }
+      .chip {
+        display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 999px;
+        padding: 0.35rem 0.45rem 0.35rem 0.8rem; font-size: 0.95rem;
+      }
+      .chip button {
+        width: 1.3rem; height: 1.3rem; border-radius: 999px; border: none;
+        background: rgba(255, 255, 255, 0.12); color: rgba(255, 255, 255, 0.75);
+        font-size: 0.65rem; cursor: pointer; line-height: 1;
+      }
+      .chip button:hover { background: rgba(239, 68, 68, 0.55); color: #fff; }
+      .step { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; }
+      .step .lbl { font-weight: 600; }
+      .step .sml { color: rgba(236, 253, 245, 0.6); font-size: 0.78rem; margin-top: 0.15rem; }
+      .stepbtns { display: flex; align-items: center; gap: 0.7rem; }
+      .stepbtn {
+        width: 2.6rem; height: 2.6rem; border-radius: 999px; background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.18); color: #fcd34d; font-size: 1.3rem; cursor: pointer;
+      }
+      .stepbtn:hover { background: rgba(255, 255, 255, 0.2); }
+      .stepval { min-width: 2rem; text-align: center; font-size: 1.5rem; font-weight: 800; color: #fde68a; }
+      input[type="range"] { width: 100%; margin-top: 0.7rem; accent-color: #fcd34d; }
+      .taghead { font-weight: 600; font-size: 0.95rem; }
+      .tagsub { color: rgba(236, 253, 245, 0.6); font-size: 0.75rem; margin-top: 0.15rem; margin-bottom: 0.6rem; }
+      .tagrow { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
+      .tagname {
+        width: 5.5rem; flex-shrink: 0; font-size: 0.85rem; overflow: hidden;
+        text-overflow: ellipsis; white-space: nowrap;
+      }
+      .tagrow input {
+        flex: 1; min-width: 0; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 0.7rem; padding: 0.5rem 0.7rem; color: #ecfdf5; outline: none; font-size: 0.9rem;
+      }
+      .tagrow input::placeholder { color: rgba(236, 253, 245, 0.35); }
+      .tagrow input:focus { border-color: rgba(252, 211, 77, 0.6); }
+      .rules { list-style: none; font-size: 0.92rem; color: rgba(236, 253, 245, 0.85); display: grid; gap: 0.4rem; margin-top: 0.9rem; }
+      .btn {
+        display: block; width: 100%; border: none; border-radius: 0.9rem; padding: 0.95rem;
+        font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: filter 0.15s;
+        text-align: center; text-decoration: none; font-family: inherit;
+      }
+      .btn-primary {
+        background: linear-gradient(90deg, #dc2626, #ef4444); color: #fff;
+        box-shadow: 0 10px 24px rgba(127, 20, 20, 0.35);
+      }
+      .btn-primary:hover { filter: brightness(1.1); }
+      .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+      .btn-green { background: #059669; color: #fff; }
+      .btn-green:hover { background: #10b981; }
+      .btn-ghost {
+        background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #ecfdf5; font-weight: 600;
+      }
+      .btn-ghost:hover { background: rgba(255, 255, 255, 0.16); }
+      .mt { margin-top: 0.9rem; }
+      .dots { display: flex; justify-content: center; gap: 0.4rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+      .dot { width: 0.6rem; height: 0.6rem; border-radius: 999px; background: rgba(255, 255, 255, 0.25); transition: all 0.2s; }
+      .dot.done { background: #fcd34d; }
+      .dot.cur { background: #f87171; transform: scale(1.3); }
+      .center { text-align: center; }
+      .dim { color: rgba(236, 253, 245, 0.7); font-size: 0.9rem; }
+      .tiny { color: rgba(236, 253, 245, 0.5); font-size: 0.72rem; }
+      .names { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1rem; }
+      .namecard {
+        background: linear-gradient(90deg, rgba(239, 68, 68, 0.25), rgba(16, 185, 129, 0.25));
+        border: 1px solid rgba(252, 211, 77, 0.35); border-radius: 0.9rem; padding: 0.85rem 1rem;
+        display: flex; align-items: center; gap: 0.7rem; font-size: 1.15rem; font-weight: 600;
+        color: #fef3c7; animation: pop 0.3s backwards;
+      }
+      .namecard .t { font-size: 1.5rem; }
+      .nmcol { display: flex; flex-direction: column; min-width: 0; }
+      .tagline { font-size: 0.8rem; font-weight: 500; color: rgba(253, 230, 138, 0.95); margin-top: 0.15rem; overflow-wrap: anywhere; }
+      .sumtag { color: rgba(253, 230, 138, 0.9); font-size: 0.8rem; }
+      @keyframes pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+      .amber { color: #fde68a; }
+      .bold { font-weight: 700; }
+      .summary { border-radius: 1.25rem; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.12); }
+      .summary > div { padding: 0.8rem 1rem; font-size: 0.92rem; background: rgba(255, 255, 255, 0.05); border-top: 1px solid rgba(255, 255, 255, 0.1); }
+      .summary > div:first-child { border-top: none; }
+      .linkbtn { background: none; border: none; color: rgba(236, 253, 245, 0.55); text-decoration: underline; font-size: 0.8rem; margin: 1.2rem auto 0; display: block; cursor: pointer; font-family: inherit; }
+      .linkbtn:hover { color: rgba(236, 253, 245, 0.85); }
+      /* --- Online-Erweiterungen --- */
+      .banner {
+        display: flex; align-items: center; justify-content: space-between; gap: 0.7rem;
+        background: rgba(252, 211, 77, 0.12); border: 1px solid rgba(252, 211, 77, 0.35);
+        border-radius: 1rem; padding: 0.7rem 0.9rem; font-size: 0.85rem; margin-bottom: 0.9rem;
+      }
+      .banner button {
+        flex-shrink: 0; background: rgba(252, 211, 77, 0.9); color: #1c1917; border: none; border-radius: 0.7rem;
+        padding: 0.45rem 0.7rem; font-weight: 700; font-size: 0.8rem; cursor: pointer; font-family: inherit;
+      }
+      .warn {
+        background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.45); color: #fecaca;
+        border-radius: 1rem; padding: 0.8rem 0.9rem; font-size: 0.85rem; margin-bottom: 0.9rem; line-height: 1.4;
+      }
+      .linkrow {
+        display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+        padding: 0.7rem 0; border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .linkrow:first-of-type { border-top: none; }
+      .linkname { min-width: 0; }
+      .linkname .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+      .linkname .st { font-size: 0.72rem; color: rgba(236, 253, 245, 0.5); }
+      .linkname .st.ok { color: #6ee7b7; }
+      .acts { display: flex; gap: 0.35rem; flex-shrink: 0; }
+      .sbtn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem;
+        height: 2.3rem; min-width: 2.3rem; padding: 0 0.6rem; border-radius: 0.7rem;
+        background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #ecfdf5; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: none; font-family: inherit;
+      }
+      .sbtn:hover { background: rgba(255, 255, 255, 0.2); }
+      .sbtn.wa { background: rgba(37, 211, 102, 0.85); border-color: transparent; color: #fff; }
+      .sbtn.wa:hover { background: rgba(37, 211, 102, 1); }
+      .sbtn.done { background: rgba(16, 185, 129, 0.35); }
+      .legend { font-size: 0.8rem; color: rgba(236, 253, 245, 0.7); margin-top: 1rem; line-height: 1.45; }
+      .h2 { font-size: 1.15rem; font-weight: 700; color: #fde68a; }
+    </style>
+  </head>
+  <body>
+    <div class="snowlayer" id="snow" aria-hidden="true"></div>
+    <div class="page">
+      <header>
+        <div class="tree">🎄</div>
+        <h1>Wichtel-Zauber</h1>
+        <p class="sub" id="sub">Weihnachtswichtel mit Mehrfachziehung</p>
+      </header>
+      <main id="app"></main>
+    </div>
+    <script>
+      var app = document.getElementById("app");
+
+      // ==LOGIC-START==
+      // ---------- Zufall (kryptografisch, falls verfügbar) ----------
+      function rnd(n) {
+        if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+          var a = new Uint32Array(1);
+          crypto.getRandomValues(a);
+          return a[0] % n;
+        }
+        return Math.floor(Math.random() * n);
+      }
+
+      // ---------- Zieh-Logik ----------
+      function shuffle(a) {
+        a = a.slice();
+        for (var i = a.length - 1; i > 0; i--) {
+          var j = rnd(i + 1);
+          var t = a[i];
+          a[i] = a[j];
+          a[j] = t;
+        }
+        return a;
+      }
+
+      // Verteilt die getaggten Lose: JEDER Ziehende erhält genau ein getaggtes Los
+      // (perfektes Matching im x-regulären bipartiten Graphen, Kuhn-Verfahren)
+      function decorate(base, n) {
+        var matchName = [];
+        for (var m = 0; m < n; m++) matchName.push(-1);
+        function tryK(i, visited) {
+          var opts = shuffle(base[i]);
+          for (var o = 0; o < opts.length; o++) {
+            var j = opts[o];
+            if (visited[j]) continue;
+            visited[j] = true;
+            if (matchName[j] === -1 || tryK(matchName[j], visited)) {
+              matchName[j] = i;
+              return true;
+            }
+          }
+          return false;
+        }
+        var ok = true;
+        var order = [];
+        for (var oi = 0; oi < base.length; oi++) order.push(oi);
+        order = shuffle(order);
+        for (var oi2 = 0; oi2 < order.length; oi2++) {
+          var visited = [];
+          for (var v = 0; v < n; v++) visited.push(false);
+          if (!tryK(order[oi2], visited)) { ok = false; break; }
+        }
+        var result = base.map(function (row, d) {
+          return row.map(function (j) {
+            return { j: j, tagged: ok ? matchName[j] === d : false };
+          });
+        });
+        if (!ok) {
+          // Fallback (theoretisch unerreichbar): Zufallsvergabe pro Name
+          var byName = [];
+          for (var b = 0; b < n; b++) byName.push([]);
+          for (var d2 = 0; d2 < base.length; d2++) {
+            for (var c = 0; c < base[d2].length; c++) byName[base[d2][c]].push({ drawer: d2, col: c });
+          }
+          for (var j2 = 0; j2 < n; j2++) {
+            var entries = byName[j2];
+            if (!entries.length) continue;
+            var w = entries[rnd(entries.length)];
+            result[w.drawer][w.col].tagged = true;
+          }
+        }
+        return result.map(function (row) { return shuffle(row); });
+      }
+
+      function computeAssignment(n, x) {
+        if (n < 2 || x < 1 || x > n - 1) return null;
+        var idx = [];
+        for (var i = 0; i < n; i++) idx.push(i);
+        for (var attempt = 0; attempt < 1000; attempt++) {
+          var copies = [];
+          var picks = [];
+          for (var c = 0; c < n; c++) { copies.push(x); picks.push([]); }
+          var order = shuffle(idx);
+          var ok = true;
+          for (var oi = 0; oi < order.length; oi++) {
+            var i2 = order[oi];
+            var candidates = idx.filter(function (j) { return j !== i2 && copies[j] > 0; });
+            if (candidates.length < x) { ok = false; break; }
+            for (var k = 0; k < x; k++) {
+              var maxC = Math.max.apply(null, candidates.map(function (j) { return copies[j]; }));
+              var best = candidates.filter(function (j) { return copies[j] === maxC; });
+              var pick = best[rnd(best.length)];
+              picks[i2].push(pick);
+              copies[pick] -= 1;
+              candidates = candidates.filter(function (j) { return j !== pick; });
+            }
+          }
+          if (ok) return decorate(picks, n);
+        }
+        var perm = shuffle(idx);
+        var pos = [];
+        for (var p2 = 0; p2 < n; p2++) pos[perm[p2]] = p2;
+        var circ = idx.map(function (i3) {
+          var res = [];
+          for (var k2 = 1; k2 <= x; k2++) res.push(perm[(pos[i3] + k2) % n]);
+          return res;
+        });
+        return decorate(circ, n);
+      }
+
+      // ---------- Link-Kodierung (UTF-8 → Base64url) ----------
+      // Die Daten stehen im #-Teil der URL. Dieser Teil wird nie an einen Server
+      // übertragen – es gibt keine Datenbank, nichts wird online gespeichert.
+      function b64e(str) {
+        var bytes = new TextEncoder().encode(str);
+        var bin = "";
+        for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      }
+      function b64d(s) {
+        s = s.replace(/-/g, "+").replace(/_/g, "/");
+        while (s.length % 4) s += "=";
+        var bin = atob(s);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return new TextDecoder().decode(bytes);
+      }
+
+      // Erzeugt die Daten für den persönlichen Link von Ziehendem i
+      function payloadFor(draw, i) {
+        return {
+          v: 1,
+          t: draw.title,
+          d: draw.ts,
+          n: draw.participants[i].name,
+          p: draw.assignment[i].map(function (pick) {
+            var p = draw.participants[pick.j];
+            return [p.name, pick.tagged ? String(p.tag || "").trim() : ""];
+          })
+        };
+      }
+
+      function decodePayload(code) {
+        var d = JSON.parse(b64d(code));
+        if (!d || typeof d.n !== "string" || !Array.isArray(d.p)) throw new Error("ungültig");
+        d.p = d.p.map(function (e) { return [String(e[0]), String(e[1] || "")]; });
+        return d;
+      }
+      // ==LOGIC-END==
+
+      function esc(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      function fmtDate(ts) {
+        try {
+          return new Date(ts).toLocaleString("de-DE", {
+            day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
+          }) + " Uhr";
+        } catch (e) { return ""; }
+      }
+
+      function baseUrl() { return location.href.split("#")[0]; }
+      function linkFor(draw, i) { return baseUrl() + "#w=" + b64e(JSON.stringify(payloadFor(draw, i))); }
+      function messageFor(draw, i) {
+        return "🎄 Hallo " + draw.participants[i].name + "!\n\n" +
+          "Hier ist dein geheimer Wichtel-Link für „" + draw.title + "“:\n" +
+          linkFor(draw, i) + "\n\n" +
+          "🤫 Bitte nicht weiterleiten – der Link zeigt nur DEINE Ziehung.";
+      }
+
+      // ---------- State ----------
+      var STORE = "wichtel-app-v1";
+      var DRAWSTORE = "wichtel-app-draw-v1";
+      var saved = null;
+      try { saved = JSON.parse(localStorage.getItem(STORE)); } catch (e) { saved = null; }
+      var rawP = saved && Array.isArray(saved.participants)
+        ? saved.participants
+        : ["Anna", "Ben", "Clara", "David"];
+      var participants = [];
+      for (var pi = 0; pi < rawP.length; pi++) {
+        if (rawP[pi] && typeof rawP[pi] === "object") {
+          participants.push({ name: String(rawP[pi].name || ""), tag: String(rawP[pi].tag || "") });
+        } else {
+          participants.push({ name: String(rawP[pi]), tag: "" });
+        }
+      }
+      var savedDraw = null;
+      try {
+        savedDraw = JSON.parse(localStorage.getItem(DRAWSTORE));
+        if (!savedDraw || !Array.isArray(savedDraw.participants) || !Array.isArray(savedDraw.assignment)) savedDraw = null;
+      } catch (e) { savedDraw = null; }
+
+      var state = {
+        participants: participants,
+        x: saved && typeof saved.x === "number" && saved.x >= 1 ? saved.x : 2,
+        title: saved && typeof saved.title === "string" ? saved.title : "Wichteln " + new Date().getFullYear(),
+        draw: savedDraw,
+        screen: savedDraw ? "links" : "setup",
+        revealOrder: [],
+        ri: 0,
+        phase: "ready",
+        showSummary: false,
+        flash: -1,
+        hint: "",
+        guest: null,
+        gphase: "ready"
+      };
+
+      function persist() {
+        try {
+          localStorage.setItem(STORE, JSON.stringify({ participants: state.participants, x: state.x, title: state.title }));
+        } catch (e) {}
+      }
+      function persistDraw() {
+        try {
+          if (state.draw) localStorage.setItem(DRAWSTORE, JSON.stringify(state.draw));
+          else localStorage.removeItem(DRAWSTORE);
+        } catch (e) {}
+      }
+
+      function maxX() { return Math.max(1, state.participants.length - 1); }
+      function clampX() { if (state.x > maxX()) state.x = maxX(); }
+
+      // ---------- Aktionen (Organisator) ----------
+      function addName(raw) {
+        var name = String(raw).trim().replace(/\s+/g, " ").slice(0, 24);
+        if (!name) return;
+        var exists = state.participants.some(function (p) { return p.name.toLowerCase() === name.toLowerCase(); });
+        if (exists) { state.hint = "„" + name + "“ ist schon dabei."; render(); return; }
+        state.participants.push({ name: name, tag: "" });
+        state.hint = "";
+        persist();
+        render();
+        var inp = app.querySelector('form[data-form="add"] input');
+        if (inp) inp.focus();
+      }
+
+      function removeName(i) {
+        state.participants.splice(i, 1);
+        state.hint = "";
+        clampX();
+        persist();
+        render();
+      }
+
+      function startRound() {
+        var n = state.participants.length;
+        clampX();
+        if (state.x >= 2) {
+          var anyTag = state.participants.some(function (p) { return p.tag.trim() !== ""; });
+          var allTags = state.participants.every(function (p) { return p.tag.trim() !== ""; });
+          if (anyTag && !allTags) {
+            state.hint = "Für „einer mit, einer ohne Beschreibung“ braucht jeder Name eine Beschreibung – bitte ergänzen oder alle löschen.";
+            state.screen = "setup";
+            render();
+            return;
+          }
+        }
+        if (state.draw) {
+          var ok = confirm(
+            "Es gibt bereits eine Ziehung.\n\n" +
+            "Bereits verschickte Links zeigen weiterhin die ALTE Ziehung. " +
+            "Nach dem Neu-Auslosen musst du allen die neuen Links schicken.\n\nWirklich neu auslosen?"
+          );
+          if (!ok) return;
+        }
+        var picks = computeAssignment(n, state.x);
+        if (!picks) { state.hint = "Mit dieser Kombination ist keine faire Ziehung möglich."; render(); return; }
+        state.draw = {
+          title: (state.title || "").trim() || "Wichteln",
+          ts: Date.now(),
+          x: state.x,
+          participants: state.participants.map(function (p) { return { name: p.name, tag: p.tag.trim() }; }),
+          assignment: picks,
+          sent: state.participants.map(function () { return false; })
+        };
+        persistDraw();
+        state.hint = "";
+        state.showSummary = false;
+        state.screen = "links";
+        render();
+        window.scrollTo(0, 0);
+      }
+
+      function markSent(i) {
+        if (!state.draw) return;
+        state.draw.sent[i] = true;
+        persistDraw();
+      }
+
+      function copyText(text, done) {
+        function fallback() {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          ta.setAttribute("readonly", "");
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand("copy"); } catch (e) {}
+          document.body.removeChild(ta);
+          done();
+        }
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(done, fallback);
+        } else fallback();
+      }
+
+      function startLocalReveal() {
+        var n = state.draw.participants.length;
+        state.revealOrder = [];
+        for (var i = 0; i < n; i++) state.revealOrder.push(i);
+        state.revealOrder = shuffle(state.revealOrder);
+        state.ri = 0;
+        state.phase = "ready";
+        state.screen = "reveal";
+        render();
+      }
+
+      function doDraw() {
+        state.phase = "drawing";
+        render();
+        setTimeout(function () { state.phase = "shown"; render(); }, 1200);
+      }
+
+      function next() {
+        if (state.ri + 1 >= state.draw.participants.length) { state.screen = "links"; render(); return; }
+        state.ri += 1;
+        state.phase = "ready";
+        render();
+      }
+
+      // ---------- Rendering: gemeinsame Bausteine ----------
+      function nameCards(picks) {
+        // picks: [[name, tag], ...]
+        return picks
+          .map(function (p, k) {
+            var tag = p[1];
+            var tagHtml = tag ? '<div class="tagline">' + esc(tag) + "</div>" : "";
+            return '<div class="namecard" style="animation-delay:' + k * 0.15 + 's"><span class="t">' +
+              (tag ? "🏷️" : "🎄") + '</span><span class="nmcol">' + esc(p[0]) + tagHtml + "</span></div>";
+          })
+          .join("");
+      }
+
+      function picksOf(draw, i) {
+        return draw.assignment[i].map(function (pick) {
+          var p = draw.participants[pick.j];
+          return [p.name, pick.tagged ? p.tag : ""];
+        });
+      }
+
+      function summaryHtml(draw) {
+        return '<div class="summary mt">' +
+          draw.participants
+            .map(function (p, i) {
+              var names = picksOf(draw, i)
+                .map(function (pk) {
+                  return esc(pk[0]) + (pk[1] ? ' <span class="sumtag">(🏷️ ' + esc(pk[1]) + ")</span>" : "");
+                })
+                .join(", ");
+              return '<div><span class="amber bold">' + esc(p.name) +
+                '</span> <span style="opacity:.6">🎁 beschenkt:</span> <span>' + names + "</span></div>";
+            })
+            .join("") +
+          "</div>";
+      }
+
+      // ---------- Rendering: Einrichtung ----------
+      function renderSetup() {
+        var n = state.participants.length;
+        var x = Math.min(state.x, maxX());
+        var chips = state.participants
+          .map(function (p, i) {
+            return '<span class="chip">' + esc(p.name) + (p.tag.trim() ? " 🏷️" : "") +
+              '<button data-act="remove" data-idx="' + i + '" aria-label="' + esc(p.name) + ' entfernen">✕</button></span>';
+          })
+          .join("");
+        var tagRows = state.participants
+          .map(function (p, i) {
+            return '<div class="tagrow"><span class="tagname">' + esc(p.name) + '</span>' +
+              '<input data-tag="' + i + '" maxlength="60" placeholder="Wunschgeschenk…" value="' + esc(p.tag) + '" /></div>';
+          })
+          .join("");
+        var banner = state.draw
+          ? '<div class="banner"><span>📨 Ziehung vom ' + esc(fmtDate(state.draw.ts)) + ' existiert</span>' +
+            '<button data-act="tolinks">Zu den Links</button></div>'
+          : "";
+        return banner +
+          '<div class="card"><label class="lbltop" for="title">🎄 Name der Wichtelrunde</label>' +
+          '<input id="title" class="field" data-field="title" maxlength="40" value="' + esc(state.title) + '" /></div>' +
+          '<div class="card mt"><span class="lbltop">👨‍👩‍👧‍👦 Teilnehmer</span>' +
+          '<form data-form="add" class="addrow">' +
+          '<input placeholder="Name eingeben…" maxlength="24" autocomplete="off" enterkeyhint="done" />' +
+          '<button type="button" data-act="add" aria-label="Teilnehmer hinzufügen">+</button></form>' +
+          (state.hint ? '<p class="hint">' + esc(state.hint) + "</p>" : "") +
+          (chips ? '<div class="chips">' + chips + "</div>" : "") +
+          "</div>" +
+          '<div class="card mt"><div class="step"><div><div class="lbl">Namen pro Teilnehmer</div>' +
+          '<div class="sml">Jeder zieht so viele verschiedene Namen</div></div>' +
+          '<div class="stepbtns"><button class="stepbtn" data-act="dec" aria-label="Weniger">−</button>' +
+          '<span class="stepval">' + x + "</span>" +
+          '<button class="stepbtn" data-act="inc" aria-label="Mehr">+</button></div></div>' +
+          (n >= 2
+            ? '<input type="range" min="1" max="' + (n - 1) + '" value="' + x + '" data-act="range" />'
+            : "") +
+          "</div>" +
+          '<div class="card mt"><div class="taghead">🏷️ Beschreibungen / Wünsche (optional)</div>' +
+          '<div class="tagsub">Hängt nur an EINEM Los pro Name – jeder zieht genau ein Los mit Beschreibung, alle weiteren ohne.</div>' +
+          tagRows + "</div>" +
+          '<ul class="rules card">' +
+          "<li>✅ Jeder Teilnehmer zieht " + x + (x === 1 ? " Name" : " Namen") + "</li>" +
+          "<li>✅ Niemand zieht sich selbst</li>" +
+          "<li>✅ Keine doppelten Namen pro Person</li>" +
+          "<li>✅ Jeder Name wird genau " + x + "-mal vergeben</li>" +
+          "<li>🏷️ Jeder zieht genau ein Los mit Beschreibung, die restlichen ohne</li>" +
+          "</ul>" +
+          '<button class="btn btn-primary mt" data-act="start"' + (n < 2 ? " disabled" : "") + ">🎁 Jetzt auslosen</button>" +
+          (n < 2
+            ? '<p class="hint center">Mindestens 2 Teilnehmer nötig</p>'
+            : '<p class="stat">' + n + " Teilnehmer · " + n * x + " Geschenke insgesamt</p>");
+      }
+
+      // ---------- Rendering: Links verschicken ----------
+      function renderLinks() {
+        var d = state.draw;
+        var n = d.participants.length;
+        var canShare = typeof navigator.share === "function";
+        var sentCount = d.sent.filter(Boolean).length;
+        var rows = d.participants
+          .map(function (p, i) {
+            var msg = messageFor(d, i);
+            var copied = state.flash === i;
+            var st = d.sent[i]
+              ? '<span class="st ok">✓ verschickt</span>'
+              : '<span class="st">noch nicht verschickt</span>';
+            return '<div class="linkrow"><div class="linkname"><span class="nm">' + esc(p.name) + "</span>" + st + "</div>" +
+              '<div class="acts">' +
+              '<a class="sbtn wa" href="https://wa.me/?text=' + encodeURIComponent(msg) +
+              '" target="_blank" rel="noopener" data-act="wa" data-idx="' + i + '" title="Per WhatsApp senden">💬</a>' +
+              (canShare
+                ? '<button class="sbtn" data-act="share" data-idx="' + i + '" title="Teilen">📤</button>'
+                : "") +
+              '<button class="sbtn' + (copied ? " done" : "") + '" data-act="copy" data-idx="' + i + '" title="Link kopieren">' +
+              (copied ? "✓" : "📋") + "</button>" +
+              "</div></div>";
+          })
+          .join("");
+        var fileWarn = location.protocol === "file:"
+          ? '<div class="warn">⚠️ Du hast die App als lokale Datei geöffnet. Links, die du von hier verschickst, funktionieren ' +
+            "nur auf deinem PC. Öffne die App über ihre Internet-Adresse (GitHub Pages) und lose dort aus.</div>"
+          : "";
+        return fileWarn +
+          '<div class="center"><div style="font-size:2.6rem">🎉</div>' +
+          '<div class="h2" style="margin-top:.3rem">' + esc(d.title) + " ist ausgelost!</div>" +
+          '<p class="dim" style="margin-top:.3rem">' + n + " Teilnehmer · jeder zieht " + d.x + " · " + n * d.x + " Geschenke</p>" +
+          '<p class="tiny" style="margin-top:.2rem">Ziehung vom ' + esc(fmtDate(d.ts)) + "</p></div>" +
+          '<div class="card mt"><div class="taghead">📨 Persönliche Links verschicken</div>' +
+          '<div class="tagsub">Schick jedem seinen eigenen Link – am besten als Privatnachricht. ' +
+          "Jeder Link zeigt nur die Ziehung dieser einen Person. (" + sentCount + "/" + n + " verschickt)</div>" +
+          rows + "</div>" +
+          '<p class="tiny center" style="margin-top:.7rem">Du machst selbst mit? Dann öffne nur deinen eigenen Link 😉</p>' +
+          '<button class="btn btn-ghost mt" data-act="local">📱 Lieber gemeinsam ziehen (Handy herumgeben)</button>' +
+          '<button class="btn btn-ghost mt" data-act="summary">' +
+          (state.showSummary ? "🙈 Auswertung verbergen" : "🙈 Auswertung zeigen (Spoiler!)") + "</button>" +
+          (state.showSummary ? summaryHtml(d) : "") +
+          '<button class="btn btn-primary mt" data-act="start">🔁 Neu auslosen</button>' +
+          '<button class="btn btn-ghost mt" data-act="edit">✏️ Teilnehmer ändern</button>' +
+          '<p class="tiny center" style="margin-top:1.4rem">Fair garantiert: Jede Ziehung prüft alle Regeln – andernfalls wird neu gemischt. ' +
+          "Es wird nichts auf einem Server gespeichert.</p>";
+      }
+
+      // ---------- Rendering: Handy herumgeben ----------
+      function renderReveal() {
+        var d = state.draw;
+        var n = d.participants.length;
+        var dots = state.revealOrder
+          .map(function (_, i) {
+            var cls = i < state.ri ? "dot done" : i === state.ri ? "dot cur" : "dot";
+            return '<span class="' + cls + '"></span>';
+          })
+          .join("");
+        var currentId = state.revealOrder[state.ri] || 0;
+        var currentName = d.participants[currentId] ? d.participants[currentId].name : "";
+        var body = "";
+        if (state.phase === "ready") {
+          body = '<p class="dim center">Person ' + (state.ri + 1) + " von " + n + "</p>" +
+            '<p class="center" style="margin-top:1rem;font-size:1.1rem">📱 Handy an <span class="amber bold">' +
+            esc(currentName) + "</span> geben</p>" +
+            '<p class="tiny center" style="margin-top:.3rem">Alle anderen: wegschauen 😅</p>' +
+            '<button class="btn btn-primary mt" data-act="draw" style="margin-top:1.5rem">🎁 Meine ' + d.x +
+            " Wichtel ziehen</button>";
+        } else if (state.phase === "drawing") {
+          body = '<div class="center" style="padding:1.6rem 0"><span class="shake" style="font-size:4.2rem">🎁</span>' +
+            '<p class="amber center" style="margin-top:1rem;animation:pop 0.4s">Wichtel werden ausgelost…</p></div>';
+        } else {
+          var last = state.ri + 1 >= n;
+          body = '<p class="dim center"><span class="amber bold">' + esc(currentName) + "</span>, du bist Wichtel für:</p>" +
+            '<div class="names">' + nameCards(picksOf(d, currentId)) + "</div>" +
+            '<button class="btn btn-green mt" data-act="next">' +
+            (last ? "🎉 Fertig" : "Fertig ✓ Weiter") + "</button>" +
+            '<p class="tiny center" style="margin-top:.6rem">Erst weiterklicken, wenn du deine Namen gesehen hast!</p>';
+        }
+        return '<div class="dots">' + dots + "</div>" +
+          '<div class="card">' + body + "</div>" +
+          '<button class="linkbtn" data-act="tolinks">Abbrechen & zurück</button>';
+      }
+
+      // ---------- Rendering: Ansicht für Teilnehmer (persönlicher Link) ----------
+      function renderGuest() {
+        var g = state.guest;
+        if (g.invalid) {
+          return '<div class="card center"><div style="font-size:2.4rem">🤔</div>' +
+            '<p class="h2" style="margin-top:.4rem">Link ungültig</p>' +
+            '<p class="dim" style="margin-top:.5rem">Dieser Wichtel-Link ist unvollständig oder beschädigt. ' +
+            "Bitte frag nach einem neuen Link – und achte beim Kopieren darauf, dass er komplett ist.</p></div>";
+        }
+        var x = g.p.length;
+        var body;
+        if (state.gphase === "ready") {
+          body = '<p class="center" style="font-size:1.25rem">Hallo <span class="amber bold">' + esc(g.n) + "</span> 👋</p>" +
+            '<p class="dim center" style="margin-top:.6rem">Du bist Wichtel für <b>' + x + (x === 1 ? " Person" : " Personen") + "</b>.</p>" +
+            (g.d ? '<p class="tiny center" style="margin-top:.3rem">Ziehung vom ' + esc(fmtDate(g.d)) + "</p>" : "") +
+            '<button class="btn btn-primary mt" data-act="gdraw" style="margin-top:1.4rem">🎁 Meine Wichtel aufdecken</button>' +
+            '<p class="tiny center" style="margin-top:.6rem">Pass auf, dass dir niemand über die Schulter schaut 😅</p>';
+        } else if (state.gphase === "drawing") {
+          body = '<div class="center" style="padding:1.6rem 0"><span class="shake" style="font-size:4.2rem">🎁</span>' +
+            '<p class="amber center" style="margin-top:1rem;animation:pop 0.4s">Wichtel werden aufgedeckt…</p></div>';
+        } else {
+          var hasTag = g.p.some(function (p) { return p[1]; });
+          body = '<p class="dim center"><span class="amber bold">' + esc(g.n) + "</span>, du bist Wichtel für:</p>" +
+            '<div class="names">' + nameCards(g.p) + "</div>" +
+            (hasTag && x > 1
+              ? '<p class="legend">🏷️ = hier steht der Wunsch dabei – den darfst du erfüllen.<br>' +
+                "🎄 = hier suchst du selbst ein Geschenk aus.</p>"
+              : "") +
+            '<button class="btn btn-ghost mt" data-act="ghide">🙈 Wieder verbergen</button>' +
+            '<p class="tiny center" style="margin-top:.6rem">Du kannst diesen Link jederzeit wieder öffnen.</p>';
+        }
+        return '<div class="card">' + body + "</div>";
+      }
+
+      function render() {
+        var sub = document.getElementById("sub");
+        if (state.guest) {
+          sub.textContent = state.guest.t || "Dein geheimer Wichtel-Link";
+          app.innerHTML = renderGuest();
+          return;
+        }
+        sub.textContent = "Weihnachtswichtel mit Mehrfachziehung";
+        if (state.screen === "links" && state.draw) app.innerHTML = renderLinks();
+        else if (state.screen === "reveal" && state.draw) app.innerHTML = renderReveal();
+        else app.innerHTML = renderSetup();
+      }
+
+      // ---------- Routing (#w=… = persönlicher Link) ----------
+      function route() {
+        var h = location.hash || "";
+        if (h.indexOf("#w=") === 0) {
+          try { state.guest = decodePayload(h.slice(3)); } catch (e) { state.guest = { invalid: true }; }
+          state.gphase = "ready";
+        } else {
+          state.guest = null;
+        }
+        render();
+      }
+      window.addEventListener("hashchange", route);
+
+      // ---------- Events ----------
+      app.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-act]");
+        if (!b) return;
+        var act = b.getAttribute("data-act");
+        var idx = parseInt(b.getAttribute("data-idx"), 10);
+        if (act === "add") {
+          var form = b.closest("form");
+          var field = form ? form.querySelector("input") : null;
+          if (field) addName(field.value);
+        } else if (act === "remove") removeName(idx);
+        else if (act === "dec") { state.x = Math.max(1, state.x - 1); persist(); render(); }
+        else if (act === "inc") { state.x = Math.min(maxX(), state.x + 1); persist(); render(); }
+        else if (act === "start") startRound();
+        else if (act === "draw") doDraw();
+        else if (act === "next") next();
+        else if (act === "local") startLocalReveal();
+        else if (act === "tolinks") { state.screen = "links"; render(); }
+        else if (act === "edit") { state.screen = "setup"; state.showSummary = false; render(); window.scrollTo(0, 0); }
+        else if (act === "summary") { state.showSummary = !state.showSummary; render(); }
+        else if (act === "wa") {
+          // Link öffnet sich normal; Status erst danach aktualisieren
+          markSent(idx);
+          setTimeout(render, 0);
+        } else if (act === "share") {
+          var d = state.draw;
+          navigator.share({ title: d.title, text: messageFor(d, idx) })
+            .then(function () { markSent(idx); render(); })
+            .catch(function () {});
+        } else if (act === "copy") {
+          copyText(messageFor(state.draw, idx), function () {
+            markSent(idx);
+            state.flash = idx;
+            render();
+            setTimeout(function () {
+              if (state.flash === idx) { state.flash = -1; if (state.screen === "links" && !state.guest) render(); }
+            }, 1500);
+          });
+        } else if (act === "gdraw") {
+          state.gphase = "drawing";
+          render();
+          setTimeout(function () { state.gphase = "shown"; render(); }, 1200);
+        } else if (act === "ghide") { state.gphase = "ready"; render(); }
+      });
+
+      app.addEventListener("change", function (e) {
+        var r = e.target.closest('input[type="range"]');
+        if (!r) return;
+        state.x = parseInt(r.value, 10);
+        persist();
+        render();
+      });
+
+      // Texteingaben: ohne Neu-Rendern speichern (Fokus bleibt im Feld)
+      app.addEventListener("input", function (e) {
+        var t = e.target.closest("[data-tag]");
+        if (t) {
+          var i = parseInt(t.getAttribute("data-tag"), 10);
+          if (state.participants[i]) {
+            state.participants[i].tag = t.value.slice(0, 60);
+            persist();
+          }
+          return;
+        }
+        var f = e.target.closest('[data-field="title"]');
+        if (f) { state.title = f.value.slice(0, 40); persist(); }
+      });
+
+      document.addEventListener("submit", function (e) {
+        var f = e.target.closest('form[data-form="add"]');
+        if (!f) return;
+        e.preventDefault();
+        var input = f.querySelector("input");
+        addName(input.value);
+      });
+
+      // ---------- Schnee ----------
+      var snowLayer = document.getElementById("snow");
+      for (var f = 0; f < 16; f++) {
+        var span = document.createElement("span");
+        span.textContent = "❄";
+        span.className = "flake";
+        span.style.left = (Math.random() * 100) + "%";
+        span.style.fontSize = (12 + Math.random() * 14) + "px";
+        span.style.animationDuration = (8 + Math.random() * 9) + "s";
+        span.style.animationDelay = (Math.random() * 10) + "s";
+        snowLayer.appendChild(span);
+      }
+
+      clampX();
+      route();
+    </script>
+  </body>
+</html>

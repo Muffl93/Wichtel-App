@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a1f14" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Wichtel-Zauber 🔒</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>" />
+    <!--
+      Passwortgeschützte Version der Wichtel-App.
+      Die eigentliche App steht unten nur VERSCHLÜSSELT (AES-256-GCM, Schlüssel per PBKDF2 aus dem
+      Passwort abgeleitet). Ohne Passwort lässt sie sich nicht lesen. Erzeugt von scripts/build.js.
+    -->
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { background: #22101a; }
+      body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        min-height: 100vh; color: #ecfdf5;
+        background: linear-gradient(180deg, #0a1f14, #0d2818 45%, #22101a);
+      }
+      .page { max-width: 24rem; margin: 0 auto; padding: 0 1.25rem 3rem; }
+      header { text-align: center; padding: 2.2rem 0 1.4rem; }
+      header .tree { font-size: 2.8rem; }
+      h1 { font-size: 1.9rem; color: #fde68a; margin-top: 0.4rem; letter-spacing: -0.02em; }
+      .card {
+        background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 1.25rem; padding: 1.2rem;
+      }
+      .lock { text-align: center; font-size: 0.95rem; color: rgba(236, 253, 245, 0.8); margin-bottom: 1rem; }
+      input[type="password"] {
+        width: 100%; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 0.9rem; padding: 0.85rem 1rem; color: #ecfdf5; outline: none; font-size: 1rem;
+      }
+      input[type="password"]:focus { border-color: rgba(252, 211, 77, 0.6); }
+      label.rem { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; margin-top: 0.8rem; color: rgba(236, 253, 245, 0.75); cursor: pointer; }
+      label.rem input { accent-color: #fcd34d; width: 1rem; height: 1rem; }
+      button {
+        display: block; width: 100%; margin-top: 1rem; border: none; border-radius: 0.9rem; padding: 0.9rem;
+        font-size: 1.05rem; font-weight: 700; cursor: pointer; color: #fff; font-family: inherit;
+        background: linear-gradient(90deg, #dc2626, #ef4444); box-shadow: 0 10px 24px rgba(127, 20, 20, 0.35);
+      }
+      button:disabled { opacity: 0.6; cursor: wait; }
+      .err { color: #fca5a5; font-size: 0.85rem; text-align: center; margin-top: 0.8rem; min-height: 1.1em; }
+      .wait { text-align: center; color: rgba(236, 253, 245, 0.6); font-size: 0.9rem; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div class="tree">🎄</div>
+        <h1>Wichtel-Zauber</h1>
+      </header>
+      <p class="wait" id="wait">Einen Moment…</p>
+      <form class="card" id="login" hidden autocomplete="on">
+        <p class="lock">🔒 Bitte gib das Familien-Passwort ein</p>
+        <input type="text" name="username" value="Familie" autocomplete="username" hidden />
+        <input type="password" id="pw" autocomplete="current-password" placeholder="Passwort" required aria-label="Passwort" />
+        <label class="rem"><input type="checkbox" id="remember" checked /> Auf diesem Gerät angemeldet bleiben</label>
+        <button type="submit" id="go">🔓 Öffnen</button>
+        <p class="err" id="err" role="alert"></p>
+      </form>
+    </div>
+    <script>
+      (function () {
+        var P = /*__PAYLOAD__*/null;
+        var STORE = "wichtel-zugang-v1";
+        var form = document.getElementById("login");
+        var pw = document.getElementById("pw");
+        var err = document.getElementById("err");
+        var go = document.getElementById("go");
+
+        function fromB64(s) {
+          var bin = atob(s), u = new Uint8Array(bin.length);
+          for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+          return u;
+        }
+        function toB64(u) {
+          var s = "";
+          for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]);
+          return btoa(s);
+        }
+        function deriveKey(password) {
+          var enc = new TextEncoder();
+          return crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"])
+            .then(function (base) {
+              return crypto.subtle.deriveBits(
+                { name: "PBKDF2", salt: enc.encode(P.s), iterations: P.i, hash: "SHA-256" }, base, 256);
+            })
+            .then(function (bits) { return new Uint8Array(bits); });
+        }
+        function decrypt(raw) {
+          return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["decrypt"])
+            .then(function (key) { return crypto.subtle.decrypt({ name: "AES-GCM", iv: fromB64(P.iv) }, key, fromB64(P.c)); })
+            .then(function (buf) { return new TextDecoder().decode(buf); });
+        }
+        // Ersetzt diese Seite durch die entschlüsselte App (der #-Teil der Adresse bleibt erhalten).
+        // Erst wenn diese Seite fertig geladen ist – sonst würde der Browser anhängen statt ersetzen.
+        function show(html) {
+          function replace() {
+            document.open();
+            document.write(html);
+            document.close();
+          }
+          if (document.readyState === "complete") replace();
+          else window.addEventListener("load", function () { setTimeout(replace, 0); });
+        }
+        function showForm() {
+          document.getElementById("wait").hidden = true;
+          form.hidden = false;
+          pw.focus();
+        }
+
+        if (!window.crypto || !crypto.subtle) {
+          document.getElementById("wait").textContent = "Dein Browser unterstützt die Entschlüsselung nicht. Bitte einen aktuellen Browser verwenden.";
+          return;
+        }
+
+        // Gespeicherter Zugang auf diesem Gerät?
+        var saved = null;
+        try { saved = localStorage.getItem(STORE); } catch (e) {}
+        if (saved) {
+          decrypt(fromB64(saved)).then(show, function () {
+            // Passwort wurde inzwischen geändert → neu anmelden
+            try { localStorage.removeItem(STORE); } catch (e) {}
+            showForm();
+          });
+        } else {
+          showForm();
+        }
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          err.textContent = "";
+          go.disabled = true;
+          go.textContent = "Entsperre…";
+          var raw;
+          deriveKey(pw.value)
+            .then(function (r) { raw = r; return decrypt(r); })
+            .then(function (html) {
+              if (document.getElementById("remember").checked) {
+                try { localStorage.setItem(STORE, toB64(raw)); } catch (e2) {}
+              }
+              show(html);
+            })
+            .catch(function () {
+              err.textContent = "Falsches Passwort – bitte nochmal versuchen.";
+              go.disabled = false;
+              go.textContent = "🔓 Öffnen";
+              pw.select();
+            });
+        });
+      })();
+    </script>
+  </body>
+</html>

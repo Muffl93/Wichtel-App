@@ -1,7 +1,7 @@
 # 🎄 Wichtel-Zauber
 
 Kleine Web-App für unsere Familien-Wichtelziehung – mit Mehrfachziehung und Wunschgeschenk-Regel.
-Läuft kostenlos über **GitHub Pages**, ohne Server, ohne Datenbank und ohne Anmeldung.
+Läuft kostenlos über **GitHub Pages**, ohne Server und ohne Datenbank – geschützt durch ein Familien-Passwort.
 
 ## So funktioniert's
 
@@ -27,18 +27,36 @@ Läuft kostenlos über **GitHub Pages**, ohne Server, ohne Datenbank und ohne An
 - **Neu auslosen** macht alte Links nicht ungültig – danach also allen die neuen Links schicken.
   (Jeder Link zeigt Datum und Uhrzeit der Ziehung, so sieht man, welcher aktuell ist.)
 
-## Einrichtung (einmalig, ca. 5 Minuten)
+## Passwortschutz
 
-1. Im Repository auf GitHub: **Add file → Upload files**, `index.html` und `README.md` hochladen,
-   **Commit changes**.
-2. **Settings → Pages**:
-   - *Source*: **Deploy from a branch**
-   - *Branch*: **main**, Ordner **/ (root)** → **Save**
-3. Nach 1–2 Minuten ist die App erreichbar unter:
-   **https://muffl93.github.io/Wichtel-App/**
+Die veröffentlichte Seite ist mit einem Passwort geschützt. Das Passwort steht **nirgends im Repository**,
+sondern nur im GitHub-Secret `WICHTEL_PASSWORT`:
 
-> Hinweis: GitHub Pages ist für **öffentliche** Repositories kostenlos. Das ist unbedenklich – im
-> Repository liegt nur der App-Code, keine Namen und keine Ziehungen.
+- Bei jedem Hochladen auf `main` laufen erst alle Tests. Danach verschlüsselt `scripts/build.js` die
+  komplette App mit dem Passwort (AES-256-GCM, Schlüssel per PBKDF2 mit 600.000 Runden) und veröffentlicht
+  nur die verschlüsselte Fassung samt Passwortabfrage (`scripts/login.html`).
+- Ohne Passwort lässt sich die App nicht öffnen – auch nicht über persönliche Links.
+- „Auf diesem Gerät angemeldet bleiben“ merkt sich den Zugang im Browser; dann fragt die Seite nicht jedes Mal.
+- Fehlt das Secret, bricht die Veröffentlichung ab – es wird nie eine ungeschützte Version veröffentlicht.
+
+> Der App-**Code** selbst ist im öffentlichen Repository sichtbar – er enthält aber keine Namen, Wünsche oder
+> Ziehungen. Geschützt wird die Website, auf der eure Familie die App benutzt.
+
+### Einrichtung (einmalig)
+
+1. **Settings → Secrets and variables → Actions → New repository secret**
+   - *Name*: `WICHTEL_PASSWORT`
+   - *Secret*: euer Familien-Passwort (mind. 6 Zeichen, lieber mehr)
+2. **Settings → Pages → Build and deployment → Source: „GitHub Actions“**
+3. **Actions → „Tests & Veröffentlichung“ → Run workflow** (oder einfach etwas hochladen)
+4. Nach ein paar Minuten: **https://muffl93.github.io/Wichtel-App/** fragt nach dem Passwort.
+
+**Passwort ändern:** Secret unter *Settings → Secrets and variables → Actions* aktualisieren und den Workflow
+erneut starten. Alle müssen sich dann einmal neu anmelden. Bereits verschickte Wichtel-Links funktionieren
+weiter (mit dem neuen Passwort).
+
+Lokal ausprobieren: `WICHTEL_PASSWORT=meinpasswort node scripts/build.js` → `dist/index.html`
+(muss über einen Webserver geöffnet werden, z. B. `npx serve dist`).
 
 ## Tests
 
@@ -47,6 +65,8 @@ Die Zieh-Logik steckt in `wichtel-logic.js` und wird automatisch geprüft:
 - `tests/logic.test.js` – alle Ziehregeln mit tausenden Zufallsziehungen, Zufälligkeit, Link-Kodierung
 - `tests/ui.test.js` – klickt die echten Abläufe im Browser durch (auslosen, ändern & neu auslosen,
   Links öffnen, Handy herumgeben, Neuladen …)
+- `tests/protected.test.js` – Passwortschutz: falsches/richtiges Passwort, angemeldet bleiben,
+  persönliche Links, kein Klartext in der veröffentlichten Seite, kein Build ohne Passwort
 
 Bei jedem Hochladen laufen die Tests automatisch auf GitHub (Reiter **Actions**).
 Lokal (Node.js nötig):
@@ -59,6 +79,6 @@ npm test
 
 ## Lokal öffnen
 
-`index.html` einfach im Browser öffnen. Zum Verschicken der Links aber die GitHub-Pages-Adresse
+`index.html` (die unverschlüsselte Quelle) einfach im Browser öffnen. Zum Verschicken der Links aber die GitHub-Pages-Adresse
 benutzen – Links aus einer lokal geöffneten Datei funktionieren nur auf dem eigenen PC
 (die App warnt dann auch).

@@ -91,17 +91,19 @@
       input[type="range"] { width: 100%; margin-top: 0.7rem; accent-color: #fcd34d; }
       .taghead { font-weight: 600; font-size: 0.95rem; }
       .tagsub { color: rgba(236, 253, 245, 0.6); font-size: 0.75rem; margin-top: 0.15rem; margin-bottom: 0.6rem; }
-      .tagrow { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
+      .tagrow { margin-top: 0.7rem; }
       .tagname {
-        width: 5.5rem; flex-shrink: 0; font-size: 0.85rem; overflow: hidden;
+        display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem; overflow: hidden;
         text-overflow: ellipsis; white-space: nowrap;
       }
-      .tagrow input {
-        flex: 1; min-width: 0; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18);
-        border-radius: 0.7rem; padding: 0.5rem 0.7rem; color: #ecfdf5; outline: none; font-size: 0.9rem;
+      .tagrow textarea {
+        display: block; width: 100%; min-height: 2.4rem; resize: vertical; overflow: hidden;
+        background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 0.7rem; padding: 0.5rem 0.7rem; color: #ecfdf5; outline: none;
+        font-size: 0.9rem; font-family: inherit; line-height: 1.4;
       }
-      .tagrow input::placeholder { color: rgba(236, 253, 245, 0.35); }
-      .tagrow input:focus { border-color: rgba(252, 211, 77, 0.6); }
+      .tagrow textarea::placeholder { color: rgba(236, 253, 245, 0.35); }
+      .tagrow textarea:focus { border-color: rgba(252, 211, 77, 0.6); }
       .rules { list-style: none; font-size: 0.92rem; color: rgba(236, 253, 245, 0.85); display: grid; gap: 0.4rem; margin-top: 0.9rem; }
       .btn {
         display: block; width: 100%; border: none; border-radius: 0.9rem; padding: 0.95rem;
@@ -138,8 +140,8 @@
       }
       .namecard .t { font-size: 1.5rem; }
       .nmcol { display: flex; flex-direction: column; min-width: 0; }
-      .tagline { font-size: 0.8rem; font-weight: 500; color: rgba(253, 230, 138, 0.95); margin-top: 0.15rem; overflow-wrap: anywhere; }
-      .sumtag { color: rgba(253, 230, 138, 0.9); font-size: 0.8rem; }
+      .tagline { font-size: 0.8rem; font-weight: 500; color: rgba(253, 230, 138, 0.95); margin-top: 0.15rem; overflow-wrap: anywhere; white-space: pre-line; }
+      .sumtag { color: rgba(253, 230, 138, 0.9); font-size: 0.8rem; white-space: pre-line; }
       @keyframes pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
       .amber { color: #fde68a; }
       .bold { font-weight: 700; }
@@ -233,6 +235,7 @@
       // ---------- State ----------
       var STORE = "wichtel-app-v1";
       var DRAWSTORE = "wichtel-app-draw-v1";
+      var TAGMAX = 300; // max. Zeichen pro Wunsch-Beschreibung
       var saved = null;
       try { saved = JSON.parse(localStorage.getItem(STORE)); } catch (e) { saved = null; }
       var rawP = saved && Array.isArray(saved.participants)
@@ -443,8 +446,9 @@
           .join("");
         var tagRows = state.participants
           .map(function (p, i) {
-            return '<div class="tagrow"><span class="tagname">' + esc(p.name) + '</span>' +
-              '<input data-tag="' + i + '" maxlength="60" placeholder="Wunschgeschenk…" value="' + esc(p.tag) + '" /></div>';
+            return '<div class="tagrow"><label class="tagname" for="tag' + i + '">' + esc(p.name) + "</label>" +
+              '<textarea id="tag' + i + '" data-tag="' + i + '" rows="1" maxlength="' + TAGMAX + '" ' +
+              'placeholder="Wunschgeschenk…">' + esc(p.tag) + "</textarea></div>";
           })
           .join("");
         var banner = state.draw
@@ -631,6 +635,14 @@
         else if (state.screen === "links" && state.draw) app.innerHTML = renderLinks();
         else if (state.screen === "reveal" && state.draw) app.innerHTML = renderReveal();
         else app.innerHTML = renderSetup();
+        var areas = app.querySelectorAll("textarea[data-tag]");
+        for (var a = 0; a < areas.length; a++) autosize(areas[a]);
+      }
+
+      // Text-Area wächst mit dem Inhalt mit
+      function autosize(el) {
+        el.style.height = "auto";
+        el.style.height = el.scrollHeight + 2 + "px";
       }
 
       // ---------- Routing (#w=… = persönlicher Link) ----------
@@ -707,9 +719,10 @@
         if (t) {
           var i = parseInt(t.getAttribute("data-tag"), 10);
           if (state.participants[i]) {
-            state.participants[i].tag = t.value.slice(0, 60);
+            state.participants[i].tag = t.value.slice(0, TAGMAX);
             persist();
           }
+          autosize(t);
           return;
         }
         var f = e.target.closest('[data-field="title"]');

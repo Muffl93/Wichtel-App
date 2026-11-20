@@ -207,6 +207,31 @@ describe("Teilnehmer mit persönlichem Link", () => {
     assert.ok(!(await guest.innerText("#app")).includes("Auswertung"), "keine Organisator-Funktionen");
   });
 
+  it("sieht längere, mehrzeilige Wünsche vollständig mit Zeilenumbrüchen", async () => {
+    const longWish = "Ein gutes Kochbuch,\nam liebsten italienisch 🍝\n" + "– gern mit Bildern, ".repeat(8).trim();
+    const field = page.locator('[data-tag="0"]');
+    assert.equal(await field.evaluate((el) => el.tagName), "TEXTAREA");
+    const h1 = await field.evaluate((el) => el.offsetHeight);
+    await setTags(page, [longWish, "Socken", "Kaffee", "Puzzle"]);
+    assert.ok((await field.evaluate((el) => el.offsetHeight)) > h1 * 2, "Feld wächst mit dem Text");
+
+    // Wunsch bleibt beim Wechseln der Ansicht erhalten
+    await page.click('[data-act="dec"]');
+    await page.click('[data-act="inc"]');
+    assert.equal(await page.inputValue('[data-tag="0"]'), longWish);
+
+    await page.click('[data-act="start"]');
+    await page.waitForSelector(".linkrow");
+    const holder = (await readLinks(page)).find(({ data }) => data.p.some(([n, t]) => n === "Anna" && t));
+    assert.equal(holder.data.p.find(([n]) => n === "Anna")[1], longWish, "Wunsch steht komplett im Link");
+
+    const guest = await newPage();
+    await guest.goto(holder.link);
+    await guest.click('[data-act="gdraw"]');
+    await guest.waitForSelector(".tagline");
+    assert.equal(await guest.innerText(".tagline"), longWish);
+  });
+
   it("bekommt bei kaputtem Link eine verständliche Meldung", async () => {
     await page.goto(base + "#w=kaputt!!");
     await page.waitForSelector("text=Link ungültig");
